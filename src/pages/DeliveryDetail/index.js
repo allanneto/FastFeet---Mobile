@@ -37,7 +37,7 @@ export default function DeliveryDetail({ route, navigation }) {
       status: defineStatus(
         delivery.start_date,
         delivery.end_date,
-        delivery.canceled_at
+        delivery.canceled_at,
       ),
     });
 
@@ -125,6 +125,7 @@ export default function DeliveryDetail({ route, navigation }) {
                 onPress={() => {
                   navigation.navigate('ConfirmDelivery', {
                     id,
+                    recipient_name: delivery.recipient.recipient_name,
                   });
                 }}
               >
