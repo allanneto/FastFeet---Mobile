@@ -25,11 +25,7 @@ export default function ShowProblems({ route, navigation }) {
 
   return (
     <S.Container>
-      <S.Title
-        onPress={() => {
-          console.log(problems);
-        }}
-      >
+      <S.Title>
         Encomenda
         {` 0${id}`}
       </S.Title>

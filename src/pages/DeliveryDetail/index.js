@@ -1,20 +1,25 @@
 /* eslint-disable no-shadow */
 import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { StatusBar, ActivityIndicator } from 'react-native';
+import { StatusBar, ActivityIndicator, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 import * as S from './styles';
 import api from '~/services/api';
 import FormatCep from '~/util/cepMask';
 import FormatDate from '~/util/formatDate';
 
-export default function DeliveryDetail({ route, navigation }) {
+export default function DeliveryDetail() {
   const [delivery, setDelivery] = useState({});
 
-  const { id } = route.params;
+  const route = useRoute();
+  const navigation = useNavigation();
 
-  const courier_id = useSelector((state) => state.auth.id);
+  const { id: delivery_id } = route.params;
+
+  const id = useSelector((state) => state.auth.id);
 
   const loadDelivery = async () => {
     const defineStatus = (start_date, end_date, canceled_at) => {
@@ -37,20 +42,19 @@ export default function DeliveryDetail({ route, navigation }) {
       status: defineStatus(
         delivery.start_date,
         delivery.end_date,
-        delivery.canceled_at,
+        delivery.canceled_at
       ),
     });
 
     try {
-      const response = await api.get(`deliveryman/${courier_id}/deliveries`, {
+      const response = await api.get(`deliveryman/${id}/deliveries`, {
         params: {
-          id,
+          id: delivery_id,
         },
       });
 
       const data = defineData(response.data);
 
-      console.log(data);
       setDelivery(data);
     } catch (error) {
       console.log('mano deu erro dnv....');
@@ -60,6 +64,36 @@ export default function DeliveryDetail({ route, navigation }) {
   useEffect(() => {
     loadDelivery();
   }, []);
+
+  const handleStart = async () => {
+    if (delivery.status === 'ENTREGUE') {
+      return Alert.alert('Essa entrega ja foi finalizada');
+    }
+
+    if (delivery.status === 'RETIRADO') {
+      return Alert.alert('Essa entrega ja foi iniciada');
+    }
+
+    try {
+      // eslint-disable-next-line prettier/prettier
+      const response = await api.get(
+        `deliveryman/${id}/deliveries/${delivery_id}`,
+      );
+      if (response.message) {
+        return Alert.alert(
+          'Erro ao registrar a entrega e lembre-se que só pode pegar 5 entregar por dia.',
+        );
+      }
+
+      loadDelivery();
+
+      return Alert.alert('Entrega iniciada com sucesso');
+    } catch (error) {
+      return Alert.alert(
+        'Erro ao registrar a entrega e lembre-se que só pode pegar 5 entregar por dia.',
+      );
+    }
+  };
 
   return (
     <S.Container>
@@ -81,8 +115,8 @@ export default function DeliveryDetail({ route, navigation }) {
                 delivery.recipient.city
               } - ${FormatCep(delivery.recipient.postal_code)}`}
             </S.Info>
-            <S.H3>DESTINATÁRIO</S.H3>
-            <S.Info>FENEXZ BURRO</S.Info>
+            <S.H3>PRODUTO</S.H3>
+            <S.Info>{delivery.product}</S.Info>
             <S.HBox>
               <Icon name="event" size={25} color="#32036d" />
               <S.H2>Situação da entrega</S.H2>
@@ -104,7 +138,7 @@ export default function DeliveryDetail({ route, navigation }) {
               <S.Touch
                 onPress={() => {
                   navigation.navigate('RegisterProblem', {
-                    id,
+                    id: delivery_id,
                   });
                 }}
               >
@@ -114,7 +148,7 @@ export default function DeliveryDetail({ route, navigation }) {
               <S.Touch
                 onPress={() => {
                   navigation.navigate('ShowProblems', {
-                    id,
+                    id: delivery_id,
                   });
                 }}
               >
@@ -124,7 +158,7 @@ export default function DeliveryDetail({ route, navigation }) {
               <S.Touch
                 onPress={() => {
                   navigation.navigate('ConfirmDelivery', {
-                    id,
+                    id: delivery.id,
                     recipient_name: delivery.recipient.recipient_name,
                   });
                 }}
@@ -133,6 +167,9 @@ export default function DeliveryDetail({ route, navigation }) {
                 <S.Span>Confirmar Entrega</S.Span>
               </S.Touch>
             </S.Actions>
+            <S.Start onPress={handleStart}>
+              <S.Text>Iniciar Entrega</S.Text>
+            </S.Start>
           </S.DeliveryBox>
         )}
       </S.Content>

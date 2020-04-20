@@ -63,3 +63,17 @@ export const Span = styled.Text`
   color: #999999;
   text-align: center;
 `;
+
+export const Start = styled.TouchableOpacity`
+  height: 30px;
+  background: #32036d;
+  align-items: center;
+  justify-content: center;
+`;
+
+export const Text = styled.Text`
+  font-size: 15px;
+  color: #fff;
+  text-align: center;
+  font-weight: bold;
+`;

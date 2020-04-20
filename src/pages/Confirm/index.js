@@ -3,39 +3,28 @@ import { useSelector } from 'react-redux';
 import { Alert } from 'react-native';
 import { RNCamera } from 'react-native-camera';
 
+import { useRoute, useNavigation } from '@react-navigation/native';
+
 import * as S from './styles';
 import api from '~/services/api';
 
-export default function Confirm({ route, navigation }) {
+export default function Confirm() {
   const [uri, setUri] = useState('');
 
-  const id = useSelector((state) => state.auth.id);
-  const { recipient_name: name, id: delivery_id } = route.params;
+  const route = useRoute();
+  const navigation = useNavigation();
+
+  const courier_id = useSelector((state) => state.auth.id);
+
+  const { recipient_name: name, id } = route.params;
 
   const cameraRef = useRef(null);
 
-  const handleSubmit = async () => {
-    try {
-      const dataFile = new FormData();
-
-      dataFile.append('file', {
-        type: 'image/jpg',
-        uri,
-        name: 'assignature.jpg',
-      });
-
-      console.log(dataFile);
-      await api.post('deliveryman/2/deliveries', dataFile);
-
-      console.log('mano euy cheguei aqui');
-      return Alert.alert('Entrega finalizada com sucesso!');
-    } catch (error) {
-      console.log('ah vá que deu erro dnv');
-      console.log(error);
-    }
-  };
+  const handleSubmit = async () => {};
 
   const handleCapture = async () => {
+    console.log(id);
+
     if (cameraRef) {
       const options = { quality: 0.5, base64: true };
       const data = await cameraRef.current.takePictureAsync(options);
@@ -43,22 +32,21 @@ export default function Confirm({ route, navigation }) {
       setUri(data.uri);
 
       try {
+        // eslint-disable-next-line no-undef
         const dataFile = new FormData();
 
         dataFile.append('file', {
           type: 'image/jpg',
-          uri,
+          uri: data.uri,
           name: 'assignature.jpg',
         });
+        await api.post(`deliveryman/${courier_id}/deliveries/${id}`, dataFile);
 
-        console.log(dataFile);
-        await api.post('deliveryman/2/deliveries', dataFile);
-
-        console.log('mano euy cheguei aqui');
+        navigation.navigate('Tab');
         return Alert.alert('Entrega finalizada com sucesso!');
       } catch (error) {
-        console.log('ah vá que deu erro dnv');
         console.log(error);
+        return Alert.alert('Deu erro, mas deu certo!');
       }
     }
   };
